@@ -1,0 +1,17 @@
+timestamp,source_ip,destination_ip,protocol,port,packet_size,threat_level,status,description
+2024-01-15T08:30:00Z,192.168.1.10,8.8.8.8,HTTPS,443,1500,low,allowed,Normal web traffic
+2024-01-15T08:30:01Z,192.168.1.15,10.0.0.50,SSH,22,800,medium,blocked,Suspicious login attempt
+2024-01-15T08:30:02Z,192.168.1.20,192.168.1.1,HTTP,80,1200,low,allowed,Internal web request
+2024-01-15T08:30:03Z,192.168.1.100,10.0.0.25,FTP,21,600,high,blocked,Brute force attempt
+2024-01-15T08:30:04Z,192.168.1.30,1.1.1.1,HTTPS,443,1400,low,allowed,DNS over HTTPS
+2024-01-15T08:30:05Z,192.168.1.200,10.0.0.100,SSH,22,900,high,blocked,Port scanning
+2024-01-15T08:30:06Z,192.168.1.25,8.8.4.4,HTTP,80,1100,low,allowed,Normal web traffic
+2024-01-15T08:30:07Z,192.168.1.150,10.0.0.75,FTP,21,750,medium,investigating,Multiple failed logins
+2024-01-15T08:30:08Z,192.168.1.45,10.0.0.200,HTTP,8080,2000,low,allowed,API request
+2024-01-15T08:30:09Z,203.0.113.15,10.0.0.50,SSH,22,850,high,blocked,Known malicious IP
+2024-01-15T08:30:10Z,192.168.1.60,8.8.8.8,HTTPS,443,1600,low,allowed,Secure web browsing
+2024-01-15T08:30:11Z,192.168.1.175,10.0.0.30,SSH,22,700,high,blocked,Password spraying attack
+2024-01-15T08:30:12Z,192.168.1.80,192.168.1.255,HTTP,80,1800,low,allowed,Broadcast request
+2024-01-15T08:30:13Z,198.51.100.25,10.0.0.60,FTP,21,650,medium,blocked,Anonymous FTP attempt
+2024-01-15T08:30:14Z,192.168.1.90,1.1.1.1,HTTPS,443,1450,low,allowed,Cloudflare DNS
+2024-01-15T08:30:15Z,192.168.1.220,10.0.0.80,SSH,2222,950,high,blocked,SSH on non-standard port
