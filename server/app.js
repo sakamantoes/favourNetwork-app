@@ -15,6 +15,10 @@ app.use('/api/traffic', trafficRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/threats', threatRoutes);
 
+app.get("/", async (req,res) => {
+  res.send("running")
+})
+
 app.listen(PORT, () => {
   console.log(`🚀 IDS Server running on port ${PORT}`);
 });
