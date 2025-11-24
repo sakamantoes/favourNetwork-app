@@ -12,7 +12,8 @@ const Dashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/traffic/stats');
+       const API_URL = "https://favournetwork-app-production-d24d.up.railway.app/"
+      const response = await axios.get(`${API_URL}/api/traffic/stats`);
       setStats(response.data);
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -21,7 +22,8 @@ const Dashboard = () => {
 
   const fetchAlerts = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/alerts');
+       const API_URL = "https://favournetwork-app-production-d24d.up.railway.app/"
+      const response = await axios.get(`${API_URL}/api/alerts`);
       setAlerts(response.data.slice(0, 5));
     } catch (error) {
       console.error('Error fetching alerts:', error);

@@ -18,8 +18,9 @@ const AlertsPanel = () => {
 
   const fetchAlerts = async () => {
     try {
+       const API_URL = "https://favournetwork-app-production-d24d.up.railway.app/"
       setIsLoading(true);
-      const response = await axios.get('http://localhost:5000/api/alerts');
+      const response = await axios.get(`${API_URL}/api/alerts`);
       setAlerts(response.data);
     } catch (error) {
       console.error('Error fetching alerts:', error);
@@ -84,8 +85,9 @@ const AlertsPanel = () => {
   ];
 
   const resolveAlert = async (alertId) => {
+    const API_URL = "https://favournetwork-app-production-d24d.up.railway.app/"
     try {
-      await axios.put(`http://localhost:5000/api/alerts/${alertId}/resolve`);
+      await axios.put(`${API_URL}/api/alerts/${alertId}/resolve`);
       // Update local state
       setAlerts(alerts.map(alert => 
         alert.id === alertId ? { ...alert, status: 'resolved' } : alert
@@ -101,8 +103,9 @@ const AlertsPanel = () => {
 
   const createAlert = async (e) => {
     e.preventDefault();
+     const API_URL = "https://favournetwork-app-production-d24d.up.railway.app/"
     try {
-      const response = await axios.post('http://localhost:5000/api/alerts', newAlert);
+      const response = await axios.post(`${API_URL}/api/alerts`, newAlert);
       setAlerts([response.data, ...alerts]);
       setNewAlert({
         type: '',

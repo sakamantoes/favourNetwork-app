@@ -11,7 +11,8 @@ const ThreatScanner = () => {
     
     setIsScanning(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/threats/scan', {
+       const API_URL = "https://favournetwork-app-production-d24d.up.railway.app/"
+      const response = await axios.post(`${API_URL}/api/threats/scan`, {
         payload: payload
       });
       setScanResult(response.data);
