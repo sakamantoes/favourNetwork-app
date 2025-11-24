@@ -85,9 +85,9 @@ const AlertsPanel = () => {
   ];
 
   const resolveAlert = async (alertId) => {
-    const API_URL = "https://favournetwork-app-production-d24d.up.railway.app/"
+  
     try {
-      await axios.put(`${API_URL}/api/alerts/${alertId}/resolve`);
+      await axios.put(`https://favournetwork-app-production-d24d.up.railway.app/api/alerts/${alertId}/resolve`);
       // Update local state
       setAlerts(alerts.map(alert => 
         alert.id === alertId ? { ...alert, status: 'resolved' } : alert
@@ -103,9 +103,8 @@ const AlertsPanel = () => {
 
   const createAlert = async (e) => {
     e.preventDefault();
-     const API_URL = "https://favournetwork-app-production-d24d.up.railway.app/"
     try {
-      const response = await axios.post(`${API_URL}/api/alerts`, newAlert);
+      const response = await axios.post(`https://favournetwork-app-production-d24d.up.railway.app/api/alerts`, newAlert);
       setAlerts([response.data, ...alerts]);
       setNewAlert({
         type: '',

@@ -14,10 +14,10 @@ const TrafficMonitor = () => {
 
   const fetchTraffic = async () => {
     try {
-       const API_URL = "https://favournetwork-app-production-d24d.up.railway.app/"
+    
       setIsLoading(true);
       setError(null);
-      const response = await axios.get(`${API_URL}/api/traffic?page=${currentPage}&limit=10`);
+      const response = await axios.get(`https://favournetwork-app-production-d24d.up.railway.app/api/traffic?page=${currentPage}&limit=10`);
       setTraffic(response.data.traffic);
       setTotalPages(response.data.totalPages);
     } catch (error) {
