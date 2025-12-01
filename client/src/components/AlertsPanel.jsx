@@ -12,27 +12,137 @@ const AlertsPanel = () => {
     description: ''
   });
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
   
-  // Audio references for different severities
-  const highAlertSoundRef = useRef(null);
-  const mediumAlertSoundRef = useRef(null);
-  const lowAlertSoundRef = useRef(null);
+  // Audio references
+  const alertSoundRef = useRef(null);
+  const highSoundRef = useRef(null);
+  const mediumSoundRef = useRef(null);
+  const lowSoundRef = useRef(null);
 
-  // Initialize audio files
+  // Initialize audio files - using simple beep sounds
   useEffect(() => {
-    // Different sounds for different severity levels
-    highAlertSoundRef.current = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3");
-    mediumAlertSoundRef.current = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-security-brief-alarm-1001.mp3");
-    lowAlertSoundRef.current = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-retro-game-emergency-alarm-1000.mp3");
+    // Create simple beep sounds programmatically
+    createBeepSound('high', 800, 0.5);   // High pitch for high severity
+    createBeepSound('medium', 600, 0.3); // Medium pitch for medium severity
+    createBeepSound('low', 400, 0.2);    // Low pitch for low severity
     
-    // Set volumes
-    highAlertSoundRef.current.volume = 0.4;
-    mediumAlertSoundRef.current.volume = 0.3;
-    lowAlertSoundRef.current.volume = 0.2;
+    // Also create a simple alert sound
+    alertSoundRef.current = new Audio(createBeepData(1000, 0.4));
+    
+    // Store sounds in refs
+    highSoundRef.current = new Audio(createBeepData(800, 0.5));
+    mediumSoundRef.current = new Audio(createBeepData(600, 0.3));
+    lowSoundRef.current = new Audio(createBeepData(400, 0.2));
+    
   }, []);
+
+  // Function to create beep sound data
+  const createBeepData = (frequency = 800, duration = 0.5) => {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = frequency;
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + duration);
+    
+    // Create a MediaStreamDestination to capture the audio
+    const destination = audioContext.createMediaStreamDestination();
+    oscillator.connect(destination);
+    
+    // Note: For actual playback, we'll use a different approach
+    return null;
+  };
+
+  // Function to create and play beep sound
+  const createBeepSound = (type, frequency, volume) => {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = frequency;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    } catch (e) {
+      console.log('Audio context not supported, using fallback');
+    }
+  };
+
+  // Function to play alert sound
+  const playAlertSound = (severity) => {
+    if (!soundEnabled || !hasUserInteracted) return;
+    
+    console.log(`Playing ${severity} alert sound`);
+    
+    switch(severity) {
+      case 'high':
+        // Create beep sound for high severity
+        createBeepSound('high', 800, 0.5);
+        setTimeout(() => createBeepSound('high', 800, 0.5), 300);
+        setTimeout(() => createBeepSound('high', 800, 0.5), 600);
+        break;
+      case 'medium':
+        createBeepSound('medium', 600, 0.3);
+        setTimeout(() => createBeepSound('medium', 600, 0.3), 400);
+        break;
+      case 'low':
+        createBeepSound('low', 400, 0.2);
+        break;
+      default:
+        createBeepSound('low', 400, 0.2);
+    }
+  };
+
+  // Record user interaction to enable audio
+  const handleUserInteraction = () => {
+    if (!hasUserInteracted) {
+      setHasUserInteracted(true);
+      console.log('User interaction recorded - audio enabled');
+      
+      // Play a test sound to warm up the audio context
+      setTimeout(() => {
+        createBeepSound('test', 300, 0.1);
+      }, 100);
+    }
+  };
+
+  // Test sound function - now requires user interaction
+  const testSound = (severity = 'medium') => {
+    if (!hasUserInteracted) {
+      alert('Please click the "Test Sounds" buttons first to enable audio. Browsers require user interaction before playing sounds.');
+      return;
+    }
+    playAlertSound(severity);
+  };
 
   useEffect(() => {
     fetchAlerts();
+    
+    // Add click event listener to document to detect user interaction
+    const handleClick = () => {
+      handleUserInteraction();
+    };
+    
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
   }, []);
 
   const fetchAlerts = async () => {
@@ -116,68 +226,20 @@ const AlertsPanel = () => {
     }
   };
 
-  const playAlertSound = (severity) => {
-    if (!soundEnabled) return;
-    
-    let audio;
-    switch(severity) {
-      case 'high':
-        audio = highAlertSoundRef.current;
-        if (audio) {
-          audio.currentTime = 0;
-          // Play 3 times for high severity
-          audio.play();
-          setTimeout(() => {
-            audio.currentTime = 0;
-            audio.play();
-          }, 600);
-          setTimeout(() => {
-            audio.currentTime = 0;
-            audio.play();
-          }, 1200);
-        }
-        break;
-      case 'medium':
-        audio = mediumAlertSoundRef.current;
-        if (audio) {
-          audio.currentTime = 0;
-          // Play 2 times for medium severity
-          audio.play();
-          setTimeout(() => {
-            audio.currentTime = 0;
-            audio.play();
-          }, 800);
-        }
-        break;
-      case 'low':
-        audio = lowAlertSoundRef.current;
-        if (audio) {
-          audio.currentTime = 0;
-          audio.play();
-        }
-        break;
-      default:
-        audio = lowAlertSoundRef.current;
-        if (audio) {
-          audio.currentTime = 0;
-          audio.play();
-        }
-    }
-  };
-
-  // Test sound function
-  const testSound = (severity = 'medium') => {
-    playAlertSound(severity);
-  };
-
   const createAlert = async (e) => {
     e.preventDefault();
+    
+    // Record user interaction
+    handleUserInteraction();
+    
     try {
       const response = await axios.post(`https://favournetwork-app-production-d24d.up.railway.app/api/alerts`, newAlert);
       setAlerts([response.data, ...alerts]);
       
-      // Play alert sound
-      playAlertSound(newAlert.severity);
+      // Play alert sound after a short delay
+      setTimeout(() => {
+        playAlertSound(newAlert.severity);
+      }, 300);
       
       setNewAlert({
         type: '',
@@ -196,8 +258,10 @@ const AlertsPanel = () => {
       };
       setAlerts([localAlert, ...alerts]);
       
-      // Play alert sound
-      playAlertSound(newAlert.severity);
+      // Play alert sound for local alerts too
+      setTimeout(() => {
+        playAlertSound(newAlert.severity);
+      }, 300);
       
       setNewAlert({
         type: '',
@@ -264,7 +328,6 @@ const AlertsPanel = () => {
     );
   }
 
-  // Calculate activeAlerts and resolvedAlerts BEFORE using them in JSX
   const activeAlerts = alerts.filter(alert => alert.status !== 'resolved');
   const resolvedAlerts = alerts.filter(alert => alert.status === 'resolved');
 
@@ -272,6 +335,13 @@ const AlertsPanel = () => {
     <div className="space-y-6">
       {/* Sound Controls Bar */}
       <div className="flex flex-wrap gap-3 justify-end">
+        <div className="flex items-center space-x-2 bg-gray-800 px-4 py-2 rounded-lg">
+          <span className="text-gray-300">Audio Status:</span>
+          <div className={`px-3 py-1 rounded font-medium ${hasUserInteracted ? 'bg-green-600' : 'bg-yellow-600'}`}>
+            {hasUserInteracted ? '✅ Ready' : '⏳ Click to Enable'}
+          </div>
+        </div>
+        
         <div className="flex items-center space-x-2 bg-gray-800 px-4 py-2 rounded-lg">
           <span className="text-gray-300">Alert Sounds:</span>
           <button
@@ -288,24 +358,39 @@ const AlertsPanel = () => {
             onClick={() => testSound('low')}
             className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded font-medium"
           >
-            Low
+            Test Low
           </button>
           <button
             onClick={() => testSound('medium')}
             className="px-3 py-1 bg-orange-600 hover:bg-orange-700 rounded font-medium"
           >
-            Medium
+            Test Medium
           </button>
           <button
             onClick={() => testSound('high')}
             className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded font-medium"
           >
-            High
+            Test High
           </button>
         </div>
       </div>
 
-      {/* Header with alert animation when active alerts */}
+      {/* Audio Instructions */}
+      {!hasUserInteracted && (
+        <div className="bg-yellow-900 border border-yellow-700 rounded-lg p-4 animate-pulse">
+          <div className="flex items-center">
+            <span className="text-yellow-400 mr-3 text-2xl">🔊</span>
+            <div>
+              <h4 className="text-yellow-300 font-medium">Audio Permission Required</h4>
+              <p className="text-yellow-200 text-sm">
+                Click anywhere on the page to enable alert sounds. Modern browsers require user interaction before playing audio.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
       <div className={`bg-gradient-to-r from-red-900 to-orange-900 rounded-xl p-6 border ${activeAlerts.length > 0 ? 'border-red-400 animate-pulse' : 'border-red-500'}`}>
         <div className="flex items-center justify-between">
           <div>
@@ -330,6 +415,14 @@ const AlertsPanel = () => {
           {/* Create New Alert Form */}
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
             <h3 className="text-lg font-bold text-white mb-4">Create Test Alert</h3>
+            <div className="mb-4 p-3 bg-cyan-900 border border-cyan-700 rounded-lg">
+              <p className="text-cyan-200 text-sm">
+                <span className="font-bold">Note:</span> Alert will play a sound based on severity level
+              </p>
+              <p className="text-cyan-300 text-xs mt-1">
+                {!hasUserInteracted ? '⚠️ Click page first to enable audio' : '✅ Audio ready - will play sound'}
+              </p>
+            </div>
             <form onSubmit={createAlert} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -357,9 +450,9 @@ const AlertsPanel = () => {
                   onChange={(e) => setNewAlert({...newAlert, severity: e.target.value})}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-cyan-500 focus:outline-none"
                 >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
+                  <option value="low">Low (Single Beep)</option>
+                  <option value="medium">Medium (Double Beep)</option>
+                  <option value="high">High (Triple Beep)</option>
                 </select>
               </div>
 
@@ -408,10 +501,17 @@ const AlertsPanel = () => {
 
               <button
                 type="submit"
-                className="w-full bg-cyan-600 hover:bg-cyan-700 py-3 rounded-lg font-medium transition-colors"
+                className="w-full bg-red-600 hover:bg-red-700 py-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
               >
-                Generate Alert
+                <span>🚨</span>
+                <span>Generate Alert with Sound</span>
               </button>
+              
+              <div className="text-xs text-gray-400 text-center">
+                {soundEnabled 
+                  ? `Audio: ${hasUserInteracted ? '✅ Ready' : '⏳ Requires click'}` 
+                  : "⚠️ Alert sounds are disabled"}
+              </div>
             </form>
           </div>
 
