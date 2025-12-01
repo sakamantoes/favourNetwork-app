@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
 const AlertsPanel = () => {
@@ -11,6 +11,25 @@ const AlertsPanel = () => {
     destination_ip: '',
     description: ''
   });
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  
+  // Audio references for different severities
+  const highAlertSoundRef = useRef(null);
+  const mediumAlertSoundRef = useRef(null);
+  const lowAlertSoundRef = useRef(null);
+
+  // Initialize audio files
+  useEffect(() => {
+    // Different sounds for different severity levels
+    highAlertSoundRef.current = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3");
+    mediumAlertSoundRef.current = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-security-brief-alarm-1001.mp3");
+    lowAlertSoundRef.current = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-retro-game-emergency-alarm-1000.mp3");
+    
+    // Set volumes
+    highAlertSoundRef.current.volume = 0.4;
+    mediumAlertSoundRef.current.volume = 0.3;
+    lowAlertSoundRef.current.volume = 0.2;
+  }, []);
 
   useEffect(() => {
     fetchAlerts();
@@ -18,13 +37,12 @@ const AlertsPanel = () => {
 
   const fetchAlerts = async () => {
     try {
-       const API_URL = "https://favournetwork-app-production-d24d.up.railway.app/"
+      const API_URL = "https://favournetwork-app-production-d24d.up.railway.app/";
       setIsLoading(true);
       const response = await axios.get(`${API_URL}/api/alerts`);
       setAlerts(response.data);
     } catch (error) {
       console.error('Error fetching alerts:', error);
-      // Fallback to sample data if backend is not available
       setAlerts(getSampleAlerts());
     } finally {
       setIsLoading(false);
@@ -85,20 +103,71 @@ const AlertsPanel = () => {
   ];
 
   const resolveAlert = async (alertId) => {
-  
     try {
       await axios.put(`https://favournetwork-app-production-d24d.up.railway.app/api/alerts/${alertId}/resolve`);
-      // Update local state
       setAlerts(alerts.map(alert => 
         alert.id === alertId ? { ...alert, status: 'resolved' } : alert
       ));
     } catch (error) {
       console.error('Error resolving alert:', error);
-      // Update locally if backend fails
       setAlerts(alerts.map(alert => 
         alert.id === alertId ? { ...alert, status: 'resolved' } : alert
       ));
     }
+  };
+
+  const playAlertSound = (severity) => {
+    if (!soundEnabled) return;
+    
+    let audio;
+    switch(severity) {
+      case 'high':
+        audio = highAlertSoundRef.current;
+        if (audio) {
+          audio.currentTime = 0;
+          // Play 3 times for high severity
+          audio.play();
+          setTimeout(() => {
+            audio.currentTime = 0;
+            audio.play();
+          }, 600);
+          setTimeout(() => {
+            audio.currentTime = 0;
+            audio.play();
+          }, 1200);
+        }
+        break;
+      case 'medium':
+        audio = mediumAlertSoundRef.current;
+        if (audio) {
+          audio.currentTime = 0;
+          // Play 2 times for medium severity
+          audio.play();
+          setTimeout(() => {
+            audio.currentTime = 0;
+            audio.play();
+          }, 800);
+        }
+        break;
+      case 'low':
+        audio = lowAlertSoundRef.current;
+        if (audio) {
+          audio.currentTime = 0;
+          audio.play();
+        }
+        break;
+      default:
+        audio = lowAlertSoundRef.current;
+        if (audio) {
+          audio.currentTime = 0;
+          audio.play();
+        }
+    }
+  };
+
+  // Test sound function
+  const testSound = (severity = 'medium') => {
+    playAlertSound(severity);
   };
 
   const createAlert = async (e) => {
@@ -106,6 +175,10 @@ const AlertsPanel = () => {
     try {
       const response = await axios.post(`https://favournetwork-app-production-d24d.up.railway.app/api/alerts`, newAlert);
       setAlerts([response.data, ...alerts]);
+      
+      // Play alert sound
+      playAlertSound(newAlert.severity);
+      
       setNewAlert({
         type: '',
         severity: 'medium',
@@ -115,7 +188,6 @@ const AlertsPanel = () => {
       });
     } catch (error) {
       console.error('Error creating alert:', error);
-      // Create locally if backend fails
       const localAlert = {
         id: Date.now().toString(),
         ...newAlert,
@@ -123,6 +195,10 @@ const AlertsPanel = () => {
         status: 'active'
       };
       setAlerts([localAlert, ...alerts]);
+      
+      // Play alert sound
+      playAlertSound(newAlert.severity);
+      
       setNewAlert({
         type: '',
         severity: 'medium',
@@ -188,20 +264,61 @@ const AlertsPanel = () => {
     );
   }
 
+  // Calculate activeAlerts and resolvedAlerts BEFORE using them in JSX
   const activeAlerts = alerts.filter(alert => alert.status !== 'resolved');
   const resolvedAlerts = alerts.filter(alert => alert.status === 'resolved');
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-red-900 to-orange-900 rounded-xl p-6 border border-red-500">
+      {/* Sound Controls Bar */}
+      <div className="flex flex-wrap gap-3 justify-end">
+        <div className="flex items-center space-x-2 bg-gray-800 px-4 py-2 rounded-lg">
+          <span className="text-gray-300">Alert Sounds:</span>
+          <button
+            onClick={() => setSoundEnabled(!soundEnabled)}
+            className={`px-3 py-1 rounded font-medium ${soundEnabled ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
+          >
+            {soundEnabled ? '🔊 ON' : '🔇 OFF'}
+          </button>
+        </div>
+        
+        <div className="flex items-center space-x-2 bg-gray-800 px-4 py-2 rounded-lg">
+          <span className="text-gray-300">Test Sounds:</span>
+          <button
+            onClick={() => testSound('low')}
+            className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded font-medium"
+          >
+            Low
+          </button>
+          <button
+            onClick={() => testSound('medium')}
+            className="px-3 py-1 bg-orange-600 hover:bg-orange-700 rounded font-medium"
+          >
+            Medium
+          </button>
+          <button
+            onClick={() => testSound('high')}
+            className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded font-medium"
+          >
+            High
+          </button>
+        </div>
+      </div>
+
+      {/* Header with alert animation when active alerts */}
+      <div className={`bg-gradient-to-r from-red-900 to-orange-900 rounded-xl p-6 border ${activeAlerts.length > 0 ? 'border-red-400 animate-pulse' : 'border-red-500'}`}>
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-white">Security Alerts Dashboard</h2>
             <p className="text-red-200">Real-time threat monitoring and incident response</p>
           </div>
           <div className="text-right">
-            <div className="text-3xl font-bold text-white">{activeAlerts.length}</div>
+            <div className="text-3xl font-bold text-white flex items-center">
+              {activeAlerts.length}
+              {activeAlerts.length > 0 && (
+                <span className="ml-2 text-red-300 animate-ping">⚠️</span>
+              )}
+            </div>
             <div className="text-red-300 text-sm">Active Threats</div>
           </div>
         </div>
