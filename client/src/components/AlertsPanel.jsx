@@ -14,100 +14,110 @@ const AlertsPanel = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   
-  // Audio references
+  // Audio references for siren sounds
+  const ambulanceSoundRef = useRef(null);
+  const policeSoundRef = useRef(null);
   const alertSoundRef = useRef(null);
-  const highSoundRef = useRef(null);
-  const mediumSoundRef = useRef(null);
-  const lowSoundRef = useRef(null);
 
-  // Initialize audio files - using simple beep sounds
+  // Initialize real siren sounds (from free sound libraries)
   useEffect(() => {
-    // Create simple beep sounds programmatically
-    createBeepSound('high', 800, 0.5);   // High pitch for high severity
-    createBeepSound('medium', 600, 0.3); // Medium pitch for medium severity
-    createBeepSound('low', 400, 0.2);    // Low pitch for low severity
+    // Ambulance/emergency siren sound
+    ambulanceSoundRef.current = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-sci-fi-alarm-905.mp3");
     
-    // Also create a simple alert sound
-    alertSoundRef.current = new Audio(createBeepData(1000, 0.4));
+    // Police siren sound
+    policeSoundRef.current = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-classic-alarm-995.mp3");
     
-    // Store sounds in refs
-    highSoundRef.current = new Audio(createBeepData(800, 0.5));
-    mediumSoundRef.current = new Audio(createBeepData(600, 0.3));
-    lowSoundRef.current = new Audio(createBeepData(400, 0.2));
+    // General alert sound
+    alertSoundRef.current = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-security-brief-alarm-1001.mp3");
+    
+    // Set volumes
+    ambulanceSoundRef.current.volume = 0.4;
+    policeSoundRef.current.volume = 0.4;
+    alertSoundRef.current.volume = 0.4;
+    
+    // Preload sounds
+    ambulanceSoundRef.current.load();
+    policeSoundRef.current.load();
+    alertSoundRef.current.load();
     
   }, []);
 
-  // Function to create beep sound data
-  const createBeepData = (frequency = 800, duration = 0.5) => {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+  // Function to play ambulance siren sound
+  const playAmbulanceSiren = () => {
+    if (!ambulanceSoundRef.current || !soundEnabled || !hasUserInteracted) return;
     
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.frequency.value = frequency;
-    oscillator.type = 'sine';
-    
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + duration);
-    
-    // Create a MediaStreamDestination to capture the audio
-    const destination = audioContext.createMediaStreamDestination();
-    oscillator.connect(destination);
-    
-    // Note: For actual playback, we'll use a different approach
-    return null;
+    try {
+      ambulanceSoundRef.current.currentTime = 0;
+      ambulanceSoundRef.current.play();
+      
+      // Stop after 3 seconds
+      setTimeout(() => {
+        if (ambulanceSoundRef.current) {
+          ambulanceSoundRef.current.pause();
+          ambulanceSoundRef.current.currentTime = 0;
+        }
+      }, 3000);
+    } catch (error) {
+      console.log('Error playing siren sound:', error);
+    }
   };
 
-  // Function to create and play beep sound
-  const createBeepSound = (type, frequency, volume) => {
+  // Function to play police siren sound
+  const playPoliceSiren = () => {
+    if (!policeSoundRef.current || !soundEnabled || !hasUserInteracted) return;
+    
     try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+      policeSoundRef.current.currentTime = 0;
+      policeSoundRef.current.play();
       
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.value = frequency;
-      oscillator.type = 'sine';
-      
-      gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.5);
-    } catch (e) {
-      console.log('Audio context not supported, using fallback');
+      // Stop after 3 seconds
+      setTimeout(() => {
+        if (policeSoundRef.current) {
+          policeSoundRef.current.pause();
+          policeSoundRef.current.currentTime = 0;
+        }
+      }, 3000);
+    } catch (error) {
+      console.log('Error playing siren sound:', error);
     }
   };
 
   // Function to play alert sound
-  const playAlertSound = (severity) => {
-    if (!soundEnabled || !hasUserInteracted) return;
+  const playAlertSound = () => {
+    if (!alertSoundRef.current || !soundEnabled || !hasUserInteracted) return;
     
-    console.log(`Playing ${severity} alert sound`);
+    try {
+      alertSoundRef.current.currentTime = 0;
+      alertSoundRef.current.play();
+      
+      // Stop after 2 seconds
+      setTimeout(() => {
+        if (alertSoundRef.current) {
+          alertSoundRef.current.pause();
+          alertSoundRef.current.currentTime = 0;
+        }
+      }, 2000);
+    } catch (error) {
+      console.log('Error playing alert sound:', error);
+    }
+  };
+
+  // Play appropriate sound based on severity
+  const playAlertSoundBySeverity = (severity) => {
+    if (!soundEnabled || !hasUserInteracted) return;
     
     switch(severity) {
       case 'high':
-        // Create beep sound for high severity
-        createBeepSound('high', 800, 0.5);
-        setTimeout(() => createBeepSound('high', 800, 0.5), 300);
-        setTimeout(() => createBeepSound('high', 800, 0.5), 600);
+        playPoliceSiren(); // Police siren for high severity
         break;
       case 'medium':
-        createBeepSound('medium', 600, 0.3);
-        setTimeout(() => createBeepSound('medium', 600, 0.3), 400);
+        playAmbulanceSiren(); // Ambulance siren for medium severity
         break;
       case 'low':
-        createBeepSound('low', 400, 0.2);
+        playAlertSound(); // General alert for low severity
         break;
       default:
-        createBeepSound('low', 400, 0.2);
+        playAlertSound();
     }
   };
 
@@ -116,21 +126,32 @@ const AlertsPanel = () => {
     if (!hasUserInteracted) {
       setHasUserInteracted(true);
       console.log('User interaction recorded - audio enabled');
-      
-      // Play a test sound to warm up the audio context
-      setTimeout(() => {
-        createBeepSound('test', 300, 0.1);
-      }, 100);
     }
   };
 
-  // Test sound function - now requires user interaction
-  const testSound = (severity = 'medium') => {
+  // Test sound functions
+  const testAmbulanceSound = () => {
     if (!hasUserInteracted) {
-      alert('Please click the "Test Sounds" buttons first to enable audio. Browsers require user interaction before playing sounds.');
+      alert('Please click the page first to enable audio. Browsers require user interaction before playing sounds.');
       return;
     }
-    playAlertSound(severity);
+    playAmbulanceSiren();
+  };
+
+  const testPoliceSound = () => {
+    if (!hasUserInteracted) {
+      alert('Please click the page first to enable audio. Browsers require user interaction before playing sounds.');
+      return;
+    }
+    playPoliceSiren();
+  };
+
+  const testAlertSound = () => {
+    if (!hasUserInteracted) {
+      alert('Please click the page first to enable audio. Browsers require user interaction before playing sounds.');
+      return;
+    }
+    playAlertSound();
   };
 
   useEffect(() => {
@@ -236,9 +257,9 @@ const AlertsPanel = () => {
       const response = await axios.post(`https://favournetwork-app-production-d24d.up.railway.app/api/alerts`, newAlert);
       setAlerts([response.data, ...alerts]);
       
-      // Play alert sound after a short delay
+      // Play appropriate siren sound
       setTimeout(() => {
-        playAlertSound(newAlert.severity);
+        playAlertSoundBySeverity(newAlert.severity);
       }, 300);
       
       setNewAlert({
@@ -258,9 +279,9 @@ const AlertsPanel = () => {
       };
       setAlerts([localAlert, ...alerts]);
       
-      // Play alert sound for local alerts too
+      // Play appropriate siren sound for local alerts too
       setTimeout(() => {
-        playAlertSound(newAlert.severity);
+        playAlertSoundBySeverity(newAlert.severity);
       }, 300);
       
       setNewAlert({
@@ -333,78 +354,79 @@ const AlertsPanel = () => {
 
   return (
     <div className="space-y-6">
-      {/* Sound Controls Bar */}
-      <div className="flex flex-wrap gap-3 justify-end">
-        <div className="flex items-center space-x-2 bg-gray-800 px-4 py-2 rounded-lg">
-          <span className="text-gray-300">Audio Status:</span>
-          <div className={`px-3 py-1 rounded font-medium ${hasUserInteracted ? 'bg-green-600' : 'bg-yellow-600'}`}>
-            {hasUserInteracted ? '✅ Ready' : '⏳ Click to Enable'}
+      {/* Siren Sound Controls */}
+      <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-gray-300">Siren Sounds:</span>
+              <button
+                onClick={() => setSoundEnabled(!soundEnabled)}
+                className={`px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-all ${
+                  soundEnabled 
+                    ? 'bg-green-600 hover:bg-green-700' 
+                    : 'bg-red-600 hover:bg-red-700'
+                }`}
+              >
+                <span>{soundEnabled ? '🔊' : '🔇'}</span>
+                <span>{soundEnabled ? 'Enabled' : 'Disabled'}</span>
+              </button>
+            </div>
+            
+            {!hasUserInteracted && (
+              <div className="flex items-center space-x-2 bg-yellow-900 px-3 py-1 rounded">
+                <span className="text-yellow-400">⚠️</span>
+                <span className="text-yellow-300 text-sm">Click page to enable audio</span>
+              </div>
+            )}
           </div>
-        </div>
-        
-        <div className="flex items-center space-x-2 bg-gray-800 px-4 py-2 rounded-lg">
-          <span className="text-gray-300">Alert Sounds:</span>
-          <button
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            className={`px-3 py-1 rounded font-medium ${soundEnabled ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
-          >
-            {soundEnabled ? '🔊 ON' : '🔇 OFF'}
-          </button>
-        </div>
-        
-        <div className="flex items-center space-x-2 bg-gray-800 px-4 py-2 rounded-lg">
-          <span className="text-gray-300">Test Sounds:</span>
-          <button
-            onClick={() => testSound('low')}
-            className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded font-medium"
-          >
-            Test Low
-          </button>
-          <button
-            onClick={() => testSound('medium')}
-            className="px-3 py-1 bg-orange-600 hover:bg-orange-700 rounded font-medium"
-          >
-            Test Medium
-          </button>
-          <button
-            onClick={() => testSound('high')}
-            className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded font-medium"
-          >
-            Test High
-          </button>
+          
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={testAmbulanceSound}
+              className="px-4 py-2 bg-red-700 hover:bg-red-600 rounded-lg font-medium flex items-center space-x-2"
+            >
+              <span>🚑</span>
+              <span>Test Ambulance Siren</span>
+            </button>
+            <button
+              onClick={testPoliceSound}
+              className="px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded-lg font-medium flex items-center space-x-2"
+            >
+              <span>🚓</span>
+              <span>Test Police Siren</span>
+            </button>
+            <button
+              onClick={testAlertSound}
+              className="px-4 py-2 bg-orange-700 hover:bg-orange-600 rounded-lg font-medium flex items-center space-x-2"
+            >
+              <span>⚠️</span>
+              <span>Test Alert</span>
+            </button>
+          </div>
         </div>
       </div>
-
-      {/* Audio Instructions */}
-      {!hasUserInteracted && (
-        <div className="bg-yellow-900 border border-yellow-700 rounded-lg p-4 animate-pulse">
-          <div className="flex items-center">
-            <span className="text-yellow-400 mr-3 text-2xl">🔊</span>
-            <div>
-              <h4 className="text-yellow-300 font-medium">Audio Permission Required</h4>
-              <p className="text-yellow-200 text-sm">
-                Click anywhere on the page to enable alert sounds. Modern browsers require user interaction before playing audio.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Header */}
       <div className={`bg-gradient-to-r from-red-900 to-orange-900 rounded-xl p-6 border ${activeAlerts.length > 0 ? 'border-red-400 animate-pulse' : 'border-red-500'}`}>
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-white">Security Alerts Dashboard</h2>
-            <p className="text-red-200">Real-time threat monitoring and incident response</p>
+            <p className="text-red-200">Real-time threat monitoring with emergency sirens</p>
           </div>
           <div className="text-right">
             <div className="text-3xl font-bold text-white flex items-center">
               {activeAlerts.length}
               {activeAlerts.length > 0 && (
-                <span className="ml-2 text-red-300 animate-ping">⚠️</span>
+                <span className="ml-2 text-red-300 animate-ping">🚨</span>
               )}
             </div>
             <div className="text-red-300 text-sm">Active Threats</div>
+            {activeAlerts.length > 0 && (
+              <div className="text-xs text-red-400 mt-1">
+                Emergency sirens will sound for new alerts
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -415,14 +437,30 @@ const AlertsPanel = () => {
           {/* Create New Alert Form */}
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
             <h3 className="text-lg font-bold text-white mb-4">Create Test Alert</h3>
+            
             <div className="mb-4 p-3 bg-cyan-900 border border-cyan-700 rounded-lg">
-              <p className="text-cyan-200 text-sm">
-                <span className="font-bold">Note:</span> Alert will play a sound based on severity level
-              </p>
-              <p className="text-cyan-300 text-xs mt-1">
-                {!hasUserInteracted ? '⚠️ Click page first to enable audio' : '✅ Audio ready - will play sound'}
-              </p>
+              <div className="flex items-start space-x-2">
+                <span className="text-cyan-400 text-lg">🔊</span>
+                <div>
+                  <p className="text-cyan-200 text-sm font-medium">Emergency Siren Sounds:</p>
+                  <div className="text-cyan-300 text-xs mt-1 space-y-1">
+                    <div className="flex items-center">
+                      <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                      <span>High Severity: Police Siren 🚓</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                      <span>Medium Severity: Ambulance Siren 🚑</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                      <span>Low Severity: General Alert ⚠️</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
+            
             <form onSubmit={createAlert} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -443,16 +481,24 @@ const AlertsPanel = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Severity
+                  Severity (Select to hear siren)
                 </label>
                 <select
                   value={newAlert.severity}
-                  onChange={(e) => setNewAlert({...newAlert, severity: e.target.value})}
+                  onChange={(e) => {
+                    setNewAlert({...newAlert, severity: e.target.value});
+                    // Play preview sound when severity changes
+                    if (hasUserInteracted && soundEnabled) {
+                      setTimeout(() => {
+                        playAlertSoundBySeverity(e.target.value);
+                      }, 100);
+                    }
+                  }}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-cyan-500 focus:outline-none"
                 >
-                  <option value="low">Low (Single Beep)</option>
-                  <option value="medium">Medium (Double Beep)</option>
-                  <option value="high">High (Triple Beep)</option>
+                  <option value="low">🟡 Low (General Alert)</option>
+                  <option value="medium">🟠 Medium (Ambulance Siren)</option>
+                  <option value="high">🔴 High (Police Siren)</option>
                 </select>
               </div>
 
@@ -501,16 +547,19 @@ const AlertsPanel = () => {
 
               <button
                 type="submit"
-                className="w-full bg-red-600 hover:bg-red-700 py-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+                className="w-full bg-red-600 hover:bg-red-700 py-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 relative overflow-hidden"
               >
-                <span>🚨</span>
-                <span>Generate Alert with Sound</span>
+                <span className="relative z-10">🚨</span>
+                <span className="relative z-10">Generate Alert with Siren</span>
+                {soundEnabled && hasUserInteracted && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-orange-600 opacity-75 animate-pulse"></div>
+                )}
               </button>
               
-              <div className="text-xs text-gray-400 text-center">
+              <div className="text-xs text-gray-400 text-center pt-2">
                 {soundEnabled 
-                  ? `Audio: ${hasUserInteracted ? '✅ Ready' : '⏳ Requires click'}` 
-                  : "⚠️ Alert sounds are disabled"}
+                  ? `Audio: ${hasUserInteracted ? '✅ Sirens Ready' : '⏳ Click page to enable'}`
+                  : "🔇 Sirens Disabled"}
               </div>
             </form>
           </div>
@@ -524,19 +573,28 @@ const AlertsPanel = () => {
                 <span className="text-white font-bold">{alerts.length}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-red-400">High Severity</span>
+                <div className="flex items-center">
+                  <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                  <span className="text-red-400">Police Siren Alerts</span>
+                </div>
                 <span className="text-white font-bold">
                   {alerts.filter(a => a.severity === 'high').length}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-orange-400">Medium Severity</span>
+                <div className="flex items-center">
+                  <span className="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                  <span className="text-orange-400">Ambulance Siren Alerts</span>
+                </div>
                 <span className="text-white font-bold">
                   {alerts.filter(a => a.severity === 'medium').length}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-green-400">Resolved</span>
+                <div className="flex items-center">
+                  <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                  <span className="text-green-400">Resolved Alerts</span>
+                </div>
                 <span className="text-white font-bold">{resolvedAlerts.length}</span>
               </div>
             </div>
@@ -548,13 +606,21 @@ const AlertsPanel = () => {
           {/* Active Alerts */}
           <div className="bg-gray-800 rounded-xl border border-gray-700">
             <div className="p-4 border-b border-gray-700">
-              <h3 className="text-lg font-bold text-white flex items-center">
-                <span className="text-red-400 mr-2">🚨</span>
-                Active Security Alerts
-                <span className="ml-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm">
-                  {activeAlerts.length}
-                </span>
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-white flex items-center">
+                  <span className="text-red-400 mr-2">🚨</span>
+                  Active Security Alerts
+                  <span className="ml-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm">
+                    {activeAlerts.length}
+                  </span>
+                </h3>
+                {activeAlerts.length > 0 && (
+                  <div className="text-xs text-red-400 animate-pulse flex items-center">
+                    <span className="mr-2">⚠️</span>
+                    Sirens Active
+                  </div>
+                )}
+              </div>
             </div>
             <div className="divide-y divide-gray-700 max-h-96 overflow-y-auto">
               {activeAlerts.length === 0 ? (
@@ -569,7 +635,8 @@ const AlertsPanel = () => {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-3">
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${getSeverityColor(alert.severity)}`}>
-                          {alert.severity.toUpperCase()}
+                          {alert.severity === 'high' ? '🚓 POLICE' : 
+                           alert.severity === 'medium' ? '🚑 AMBULANCE' : '⚠️ ALERT'}
                         </span>
                         <span className={`text-xs border px-2 py-1 rounded ${getStatusColor(alert.status)}`}>
                           {getStatusIcon(alert.status)} {alert.status}
@@ -592,15 +659,35 @@ const AlertsPanel = () => {
                       <div className="flex space-x-2">
                         <button
                           onClick={() => resolveAlert(alert.id)}
-                          className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-xs font-medium transition-colors"
+                          className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-xs font-medium transition-colors flex items-center"
                         >
+                          <span className="mr-1">✅</span>
                           Resolve
                         </button>
                         <button
-                          onClick={() => deleteAlert(alert.id)}
-                          className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-xs font-medium transition-colors"
+                          onClick={() => {
+                            deleteAlert(alert.id);
+                            // Play sound when deleting alert
+                            if (hasUserInteracted && soundEnabled) {
+                              playAlertSound();
+                            }
+                          }}
+                          className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-xs font-medium transition-colors flex items-center"
                         >
+                          <span className="mr-1">🗑️</span>
                           Delete
+                        </button>
+                        <button
+                          onClick={() => {
+                            // Replay the siren sound for this alert
+                            if (hasUserInteracted && soundEnabled) {
+                              playAlertSoundBySeverity(alert.severity);
+                            }
+                          }}
+                          className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs font-medium transition-colors flex items-center"
+                        >
+                          <span className="mr-1">🔊</span>
+                          Play Siren
                         </button>
                       </div>
                     </div>
