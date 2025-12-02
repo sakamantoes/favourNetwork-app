@@ -16,7 +16,7 @@ app.use('/api/alerts', alertRoutes);
 app.use('/api/threats', threatRoutes);
 
 app.get("/", async (req,res) => {
-  res.send("running")
+  res.send("running favour app")
 })
 
 app.listen(PORT, () => {
