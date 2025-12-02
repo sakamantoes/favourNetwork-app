@@ -13,7 +13,7 @@ const Dashboard = () => {
   const fetchStats = async () => {
     try {
      
-      const response = await axios.get(`https://favournetwork-app-production-d24d.up.railway.app/api/traffic/stats`);
+      const response = await axios.get(`https://favour-network-app-ltde.vercel.app/api/traffic/stats`);
       setStats(response.data);
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -23,7 +23,7 @@ const Dashboard = () => {
   const fetchAlerts = async () => {
     try {
       
-      const response = await axios.get(`https://favournetwork-app-production-d24d.up.railway.app/api/alerts`);
+      const response = await axios.get(`https://favour-network-app-ltde.vercel.app/api/alerts`);
       setAlerts(response.data.slice(0, 5));
     } catch (error) {
       console.error('Error fetching alerts:', error);

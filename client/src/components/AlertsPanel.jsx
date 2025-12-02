@@ -147,7 +147,7 @@ const AlertsPanel = () => {
 
   const fetchAlerts = async () => {
     try {
-      const API_URL = "https://favournetwork-app-production-d24d.up.railway.app/";
+      const API_URL = "https://favour-network-app-ltde.vercel.app/";
       setIsLoading(true);
       const response = await axios.get(`${API_URL}/api/alerts`);
       setAlerts(response.data);

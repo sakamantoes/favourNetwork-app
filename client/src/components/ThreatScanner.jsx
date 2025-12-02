@@ -12,7 +12,7 @@ const ThreatScanner = () => {
     setIsScanning(true);
     try {
      
-      const response = await axios.post(`https://favournetwork-app-production-d24d.up.railway.app/api/threats/scan`, {
+      const response = await axios.post(`https://favour-network-app-ltde.vercel.app/api/threats/scan`, {
         payload: payload
       });
       setScanResult(response.data);
